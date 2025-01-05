@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container nagoyameshi-container">
+    <div class="restaurant-detail">
+        <div class="restaurant-header">
+            <h1>{{ restaurant.name }}</h1>
+            <div class="d-flex justify-content-center gap-3">
+                <p>カテゴリ: {{ restaurant.get_category_display }}</p>
+                <p>エリア: {{ restaurant.get_area_display }}</p>
+            </div>
+        </div>
+
+        <div class="basic-info">
+            <h2>基本情報</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">営業時間</span>
+                    <span class="info-value">{{ restaurant.opening_time|time:"H:i" }} - {{ restaurant.closing_time|time:"H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-section">
+            {% if user.is_authenticated %}
+                <a href="{% url 'restaurants:make_reservation' restaurant.id %}" class="btn btn-primary reservation-btn">
+                    予約する
+                </a>
+                <button class="btn btn-link favorite-btn" data-restaurant-id="{{ restaurant.id }}">
+                    <i class="fas fa-heart {% if restaurant in user.favorite_set.all %}text-danger{% else %}text-secondary{% endif %} fa-lg"></i>
+                    <span>
+                        {% if restaurant in user.favorite_set.all %}
+                            お気に入り済み
+                        {% else %}
+                            お気に入り
+                        {% endif %}
+                    </span>
+                </button>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-primary">ログインして予約</a>
+            {% endif %}
+        </div>
+
+        {% if user.is_authenticated %}
+            <div class="review-section">
+                <h2>レビューを投稿</h2>
+                <form method="post" action="{% url 'restaurants:add_review' restaurant.id %}" class="review-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="rating">評価</label>
+                        <select name="rating" id="rating" class="form-control" required>
+                            <option value="5">★★★★★</option>
+                            <option value="4">★★★★</option>
+                            <option value="3">★★★</option>
+                            <option value="2">★★</option>
+                            <option value="1">★</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="comment">コメント</label>
+                        <textarea name="comment" id="comment" class="form-control" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">投稿する</button>
+                </form>
+            </div>
+        {% endif %}
+
+        <div class="reviews-list">
+            <h2>レビュー一覧</h2>
+            {% for review in restaurant.reviews.all %}
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="rating">
+                            {% for i in ""|ljust:review.rating %}★{% endfor %}
+                        </span>
+                        <span class="username">{{ review.user.username }}</span>
+                        <span class="date">{{ review.created_at|date:"Y/m/d" }}</span>
+                    </div>
+                    <p class="comment">{{ review.comment }}</p>
+                </div>
+            {% empty %}
+                <p>まだレビューがありません。</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const favoriteBtn = document.querySelector('.favorite-btn');
+    
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const restaurantId = this.dataset.restaurantId;
+            const heartIcon = this.querySelector('i');
+            
+            try {
+                const response = await fetch(`/restaurants/${restaurantId}/toggle_favorite/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                // ハートアイコンの色を切り替え
+                if (data.is_favorite) {
+                    heartIcon.classList.remove('text-secondary');
+                    heartIcon.classList.add('text-danger');
+                    this.querySelector('span').textContent = 'お気に入り済み';
+                } else {
+                    heartIcon.classList.remove('text-danger');
+                    heartIcon.classList.add('text-secondary');
+                    this.querySelector('span').textContent = 'お気に入り';
+                }
+
+                // 1秒後にページをリロード
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('お気に入りの更新に失敗しました。');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 

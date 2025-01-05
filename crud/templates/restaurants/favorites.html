@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}お気に入り一覧{% endblock %}
+
+{% block content %}
+<div class="container nagoyameshi-container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-5 col-lg-6 col-md-8">
+            <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">お気に入り一覧</li>
+                </ol>
+            </nav>
+            <h1 class="mb-3 text-center">お気に入り一覧</h1>
+
+            {% if favorites %}
+                <div class="restaurant-list">
+                    {% for favorite in favorites %}
+                    <div class="restaurant-item">
+                        <h3>{{ favorite.restaurant.name }}</h3>
+                        <p>カテゴリ: {{ favorite.restaurant.get_category_display }}</p>
+                        <p>エリア: {{ favorite.restaurant.get_area_display }}</p>
+                        <p>営業時間: {{ favorite.restaurant.opening_time|time:"H:i" }} - {{ favorite.restaurant.closing_time|time:"H:i" }}</p>
+                        <a href="{% url 'restaurants:restaurant_detail' favorite.restaurant.pk %}" class="detail-link">
+                            詳細を見る
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center">お気に入りに登録された店舗はありません。</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

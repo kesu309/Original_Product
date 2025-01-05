@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="restaurant-detail">
+    <div class="restaurant-header">
+        <h1>{{ restaurant.name }}</h1>
+        <div class="rating-display">
+            <div class="rating-stars">{{ "★" | multiply:restaurant.average_rating|default:0 }}</div>
+            <div class="rating-number">{{ restaurant.average_rating|default:0|floatformat:1 }}</div>
+            <div class="rating-count">({{ reviews.count }}件のレビュー)</div>
+        </div>
+    </div>
+
+    <div class="restaurant-nav">
+        <ul>
+            <li><a href="#top" class="active">トップ</a></li>
+            <li><a href="#reservation">予約</a></li>
+            <li><a href="#reviews">レビュー</a></li>
+        </ul>
+    </div>
+
+    <div class="restaurant-content">
+        <div class="basic-info">
+            <h2>店舗情報</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">店舗名</div>
+                    <div class="info-value">{{ restaurant.name }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">説明</div>
+                    <div class="info-value">{{ restaurant.description }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">価格帯</div>
+                    <div class="info-value">{{ restaurant.price_range }}円</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">郵便番号</div>
+                    <div class="info-value">{{ restaurant.postal_code }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">住所</div>
+                    <div class="info-value">{{ restaurant.address }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">営業時間</div>
+                    <div class="info-value">{{ restaurant.opening_time }} ～ {{ restaurant.closing_time }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">定休日</div>
+                    <div class="info-value">{{ restaurant.closed_days }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">座席数</div>
+                    <div class="info-value">{{ restaurant.seats }}席</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">カテゴリ</div>
+                    <div class="info-value">{{ restaurant.get_category_display }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if user.is_authenticated %}
+            <div class="action-section">
+                <div class="favorite-section">
+                    <button class="favorite-btn {% if is_favorite %}active{% endif %}" 
+                            data-restaurant-id="{{ restaurant.pk }}">
+                        ♥ お気に入り追加
+                    </button>
+                </div>
+                <div class="reservation-section" id="reservation">
+                    <a href="{% url 'restaurants:make_reservation' restaurant.pk %}" class="btn reservation-btn">予約する</a>
+                </div>
+            </div>
+
+            <div class="review-section" id="reviews">
+                <h2>レビューを書く</h2>
+                <form method="post" action="{% url 'restaurants:add_review' restaurant.pk %}" class="review-form">
+                    {% csrf_token %}
+                    {{ review_form.as_p }}
+                    <button type="submit" class="btn submit-btn">投稿</button>
+                </form>
+            </div>
+        {% endif %}
+
+        <div class="reviews-list">
+            <h2>レビュー一覧</h2>
+            {% if reviews %}
+                {% for review in reviews %}
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span class="rating">{{ "★" | multiply:review.rating }}</span>
+                            <span class="username">{{ review.user.username }}</span>
+                            <span class="date">{{ review.created_at|date:"Y/m/d H:i" }}</span>
+                        </div>
+                        <p class="comment">{{ review.comment }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-reviews">まだレビューがありません。</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<script>
+document.querySelector('.favorite-btn').addEventListener('click', function() {
+    const restaurantId = this.dataset.restaurantId;
+    fetch(`/restaurant/${restaurantId}/favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.is_favorite) {
+            this.classList.add('active');
+        } else {
+            this.classList.remove('active');
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %} 

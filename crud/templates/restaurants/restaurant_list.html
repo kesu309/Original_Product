@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="bg-light mb-4 py-4">
+    <div class="container nagoyameshi-container">
+        <h2 class="mb-3">キーワードから探す</h2>
+        <form method="get" class="user-search-box">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="店舗名・エリア・カテゴリ" name="keyword" value="{{ form.keyword.value|default:'' }}">
+                <button type="submit" class="btn btn-primary text-white shadow-sm">検索</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="container nagoyameshi-container">
+    {% if restaurants %}
+        <div class="restaurant-list">
+            {% for restaurant in restaurants %}
+                <div class="restaurant-item">
+                    <h3>{{ restaurant.name }}</h3>
+                    <p>カテゴリ: {{ restaurant.get_category_display }}</p>
+                    <p>エリア: {{ restaurant.get_area_display }}</p>
+                    <p>営業時間: {{ restaurant.opening_time|time:"H:i" }} - {{ restaurant.closing_time|time:"H:i" }}</p>
+                    <a href="{% url 'restaurants:restaurant_detail' restaurant.id %}" class="detail-link">詳細を見る</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-results">検索結果が見つかりませんでした。</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrftoken = "{{ csrf_token }}";
+    const favoriteButtons = document.querySelectorAll('.favorite-btn');
+    
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const restaurantId = this.dataset.restaurantId;
+            const heartIcon = this.querySelector('i');
+            
+            try {
+                const response = await fetch(`/restaurants/${restaurantId}/toggle_favorite/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                if (data.is_favorite) {
+                    heartIcon.classList.remove('text-secondary');
+                    heartIcon.classList.add('text-danger');
+                } else {
+                    heartIcon.classList.remove('text-danger');
+                    heartIcon.classList.add('text-secondary');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

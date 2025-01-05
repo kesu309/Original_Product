@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="login-form">
+    <h2>ログイン</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="username">ユーザー名:</label>
+            <input type="text" name="username" id="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">パスワード:</label>
+            <input type="password" name="password" id="password" required>
+        </div>
+        {% if form.errors %}
+            <p class="error-message">ユーザー名またはパスワードが正しくありません。</p>
+        {% endif %}
+        <button type="submit">ログイン</button>
+    </form>
+    <p class="signup-link">
+        アカウントをお持ちでない方は<a href="{% url 'signup' %}">こちら</a>から新規登録
+    </p>
+</div>
+{% endblock %} 

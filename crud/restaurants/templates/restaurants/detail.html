@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{{ restaurant.name }}</h1>
+    
+    {% if user.is_authenticated %}
+        <div class="reservation-section">
+            <h2>予約する</h2>
+            <form method="post" action="{% url 'restaurants:make_reservation' restaurant.id %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        {{ reservation_form.date.label_tag }}
+                        {{ reservation_form.date }}
+                    </div>
+                    <div class="form-group">
+                        {{ reservation_form.time.label_tag }}
+                        {{ reservation_form.time }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    {{ reservation_form.number_of_people.label_tag }}
+                    {{ reservation_form.number_of_people }}
+                </div>
+                <div class="form-group">
+                    {{ reservation_form.notes.label_tag }}
+                    {{ reservation_form.notes }}
+                </div>
+                <button type="submit">予約する</button>
+            </form>
+        </div>
+
+        {% if reservations %}
+            <div class="my-reservations">
+                <h2>あなたの予約</h2>
+                {% for reservation in reservations %}
+                    <div class="reservation-card">
+                        <p>日時: {{ reservation.date }} {{ reservation.time }}</p>
+                        <p>人数: {{ reservation.number_of_people }}名</p>
+                        {% if reservation.notes %}
+                            <p>備考: {{ reservation.notes }}</p>
+                        {% endif %}
+                        <form method="post" action="{% url 'restaurants:cancel_reservation' reservation.id %}" 
+                              onsubmit="return confirm('予約をキャンセルしますか？');">
+                            {% csrf_token %}
+                            <button type="submit" class="cancel-button">キャンセル</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="review-form">
+            <h3>レビューを投稿</h3>
+            <form method="post" action="{% url 'restaurants:add_review' restaurant.id %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">投稿</button>
+            </form>
+        </div>
+    {% endif %}
+
+    <h2>レビュー一覧</h2>
+    {% for review in reviews %}
+        <div class="review">
+            <p>評価: {{ review.rating }}/5</p>
+            <p>{{ review.comment }}</p>
+            <p>投稿者: {{ review.user.username }}</p>
+            <p>投稿日: {{ review.created_at }}</p>
+        </div>
+    {% empty %}
+        <p>まだレビューがありません。</p>
+    {% endfor %}
+{% endblock %} 

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}会員情報{% endblock %}
+
+{% block content %}
+<div class="container nagoyameshi-container pb-5">
+    <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
+            <li class="breadcrumb-item active" aria-current="page">会員情報</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4 text-center">会員情報</h1>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-5 col-lg-6 col-md-8">
+            <div class="mb-4">
+                <div class="row mb-2">
+                    <div class="col-3 fw-bold">氏名</div>
+                    <div class="col">{{ user.username }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-3 fw-bold">フリガナ</div>
+                    <div class="col">{{ profile.username_kana }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-3 fw-bold">メールアドレス</div>
+                    <div class="col">{{ user.email }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-3 fw-bold">郵便番号</div>
+                    <div class="col">{{ profile.post_code }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-3 fw-bold">住所</div>
+                    <div class="col">{{ profile.address }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-3 fw-bold">電話番号</div>
+                    <div class="col">{{ profile.tel }}</div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center">
+                <a class="btn btn-primary" href="{% url 'restaurants:edit_profile' %}">編集</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

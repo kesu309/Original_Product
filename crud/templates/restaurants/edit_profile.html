@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}会員情報編集{% endblock %}
+
+{% block content %}
+<div class="container nagoyameshi-container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-5 col-lg-6 col-md-8">
+            <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:profile' %}">会員情報</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">編集</li>
+                </ol>
+            </nav>
+            <h1 class="mb-3 text-center">会員情報編集</h1>
+
+            <form method="post" class="profile-form">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in field.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">更新</button>
+                    <a href="{% url 'restaurants:profile' %}" class="btn btn-outline-secondary">キャンセル</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 
