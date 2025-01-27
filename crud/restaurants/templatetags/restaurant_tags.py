@@ -11,3 +11,7 @@ def is_favorited(restaurant_id, user):
     if user.is_authenticated:
         return Favorite.objects.filter(restaurant_id=restaurant_id, user=user).exists()
     return False 
+
+@register.filter
+def multiply(value, arg):
+    return value * arg 

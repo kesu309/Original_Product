@@ -14,15 +14,33 @@ class Restaurant(models.Model):
     ]
     
     AREA_CHOICES = [
-        ('shibuya', '渋谷'),
-        ('shinjuku', '新宿'),
-        ('ikebukuro', '池袋'),
-        ('ginza', '銀座'),
-        ('roppongi', '六本木'),
-        ('other', 'その他'),
+        ('higashi', '福岡市東区'),
+        ('chuo', '福岡市中央区'),
+        ('hakata', '福岡市博多区'),
+        ('minami', '福岡市南区'),
+        ('nishi', '福岡市西区'),
+        ('jonan', '福岡市城南区'),
+        ('sawara', '福岡市早良区'),
+    ]
+    
+    PRICE_RANGE_CHOICES = [
+        ('budget', '~¥1,000'),
+        ('low', '¥1,000~¥2,000'),
+        ('middle', '¥2,000~¥4,000'),
+        ('high', '¥4,000~¥8,000'),
+        ('expensive', '¥8,000~'),
     ]
     
     name = models.CharField(max_length=100, verbose_name='店舗名')
+    description = models.TextField(verbose_name='店舗説明', blank=True)
+    price_range = models.CharField(
+        max_length=20,
+        choices=PRICE_RANGE_CHOICES,
+        default='middle',
+        verbose_name='価格帯'
+    )
+    post_code = models.CharField(max_length=7, verbose_name='郵便番号')
+    address = models.CharField(max_length=200, verbose_name='住所', blank=True, default='')
     category = models.CharField(
         max_length=20, 
         choices=CATEGORY_CHOICES, 
@@ -36,13 +54,22 @@ class Restaurant(models.Model):
         verbose_name='エリア'
     )
     opening_time = models.TimeField(default='11:00', verbose_name='開店時間')
-    closing_time = models.TimeField(default='23:00', verbose_name='閉店時間')
+    closing_time = models.TimeField(default='22:00', verbose_name='閉店時間')
+    closed_days = models.CharField(max_length=100, verbose_name='定休日', blank=True)
 
     def __str__(self):
         return self.name
 
     def is_open_at(self, time):
         return self.opening_time <= time <= self.closing_time
+
+    @property
+    def average_rating(self):
+        """レストランの平均評価を計算する"""
+        reviews = self.reviews.all()
+        if not reviews:
+            return 0
+        return sum(review.rating for review in reviews) / len(reviews)
 
 class Review(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='reviews')
@@ -63,13 +90,38 @@ class Review(models.Model):
         return f"{self.restaurant.name} - {self.user.username}のレビュー"
 
 class Reservation(models.Model):
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='reservations')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateField(verbose_name='予約日')
-    time = models.TimeField(verbose_name='予約時間')
+    restaurant = models.ForeignKey(
+        Restaurant, 
+        on_delete=models.CASCADE, 
+        related_name='reservations',
+        verbose_name='店舗'
+    )
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+        verbose_name='ユーザー'
+    )
+    date = models.DateField(
+        verbose_name='予約日',
+        error_messages={
+            'invalid': '正しい日付の形式で入力してください。',
+            'required': '予約日を入力してください。'
+        }
+    )
+    time = models.TimeField(
+        verbose_name='予約時間',
+        error_messages={
+            'invalid': '正しい時間の形式で入力してください。',
+            'required': '予約時間を入力してください。'
+        }
+    )
     number_of_people = models.IntegerField(
-        validators=[MinValueValidator(1)],
-        verbose_name='人数'
+        validators=[MinValueValidator(1, message='1名以上を入力してください。')],
+        verbose_name='人数',
+        error_messages={
+            'invalid': '正しい人数を入力してください。',
+            'required': '人数を入力してください。'
+        }
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -77,9 +129,30 @@ class Reservation(models.Model):
         verbose_name = '予約'
         verbose_name_plural = '予約一覧'
         ordering = ['date', 'time']
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "date", "time"],
+                name="reservation_unique"
+            ),
+        ]
+
+    def get_japanese_weekday(self):
+        weekday_dict = {
+            0: '月',
+            1: '火',
+            2: '水',
+            3: '木',
+            4: '金',
+            5: '土',
+            6: '日'
+        }
+        return weekday_dict[self.date.weekday()]
 
     def __str__(self):
-        return f"{self.restaurant.name} - {self.date} {self.time}"
+        formatted_date = self.date.strftime('%Y/%m/%-d')
+        formatted_time = self.time.strftime('%H:%M')
+        weekday = self.get_japanese_weekday()
+        return f"{self.restaurant.name} - {formatted_date}（{weekday}） {formatted_time}"
 
 class Favorite(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='favorites')

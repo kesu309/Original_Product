@@ -1,95 +1,153 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}予約一覧{% endblock %}
 
 {% block content %}
-<div class="modal fade" id="cancelReservationModal" tabindex="-1" aria-labelledby="cancelReservationModalLabel">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="cancelReservationModalLabel">予約をキャンセルしますか？</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
-            </div>
-            <div class="modal-footer">
-                <form action="" method="post" name="cancelReservationForm">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger text-white shadow-sm">キャンセル</button>
-                </form>
-            </div>
-        </div>
+<style>
+.reservations-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.table {
+    margin-top: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    padding: 12px;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 12px;
+}
+
+.btn-outline-danger {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.restaurant-link {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.restaurant-link:hover {
+    color: #45a049;
+    text-decoration: underline;
+}
+
+.empty-message {
+    text-align: center;
+    color: #666;
+    margin-top: 30px;
+    font-style: italic;
+}
+</style>
+
+<div class="reservations-container">
+    <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
+            <li class="breadcrumb-item active" aria-current="page">予約一覧</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4 text-center">予約一覧</h1>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if reservations %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>店舗名</th>
+                    <th>予約日時</th>
+                    <th>人数</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                <tr>
+                    <td>
+                        <a href="{% url 'restaurants:restaurant_detail' pk=reservation.restaurant.pk %}" class="restaurant-link">
+                            {{ reservation.restaurant.name }}
+                        </a>
+                    </td>
+                    <td>{{reservation.date|date:"Y/m/d"}}（{{reservation.get_japanese_weekday}}） {{reservation.time|time:"H:i"}}</td>
+                    <td>{{reservation.number_of_people}}名</td>
+                    <td class="text-end">
+                        {% if today < reservation.date %}
+                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#deleteModal{{reservation.pk}}">
+                            削除
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-message">予約はありません。</p>
+    {% endif %}
 </div>
 
-<div class="container nagoyameshi-container pb-5">
-    <div class="row justify-content-center">
-        <div class="col-xxl-6 col-xl-7 col-lg-8 col-md-10">
-            <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">予約一覧</li>
-                </ol>
-            </nav>
-            <h1 class="mb-3 text-center">予約一覧</h1>
-
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th scope="col">店舗名</th>
-                        <th scope="col">予約日時</th>
-                        <th scope="col">人数</th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for reservation in reservations %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'restaurants:restaurant_detail' pk=reservation.restaurant.pk %}">
-                                {{reservation.restaurant.name}}
-                            </a>
-                        </td>
-                        <td>{{reservation.date}} {{reservation.time}}</td>
-                        <td>{{reservation.number_of_people}}名</td>
-                        <td>
-                            {% if today < reservation.date %}
-                            <button type="button" class="btn btn-outline-primary btn-sm" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#delete-Modal-{{ reservation.pk }}">
-                                キャンセル
-                            </button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- キャンセル確認モーダル -->
+<!-- 削除確認モーダル -->
 {% for reservation in reservations %}
-<div class="modal fade" id="delete-Modal-{{ reservation.pk }}" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteModal{{reservation.pk}}" tabindex="-1" aria-labelledby="deleteModalLabel{{reservation.pk}}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">予約キャンセルの確認</h5>
+                <h5 class="modal-title" id="deleteModalLabel{{reservation.pk}}">予約削除の確認</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
             </div>
             <div class="modal-body">
-                <p>以下の予約をキャンセルしますか？</p>
+                <p>以下の予約を削除しますか？</p>
                 <p>店舗名: {{ reservation.restaurant.name }}</p>
-                <p>予約日時: {{ reservation.date }} {{ reservation.time }}</p>
+                <p>予約日時: {{ reservation.date|date:"Y/m/d" }}（{{ reservation.get_japanese_weekday }}） {{ reservation.time|time:"H:i" }}</p>
                 <p>人数: {{ reservation.number_of_people }}名</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-                <form method="post" action="{% url 'restaurants:cancel_reservation' reservation.pk %}">
+                <form method="post" action="{% url 'restaurants:cancel_reservation' pk=reservation.pk %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">キャンセルする</button>
+                    <button type="submit" class="btn btn-danger">削除する</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 {% endfor %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // メッセージの自動非表示
+    var alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+        setTimeout(function() {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 3000);
+    });
+});
+</script>
 {% endblock %} 

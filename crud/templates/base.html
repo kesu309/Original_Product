@@ -33,8 +33,18 @@
                                     </a>
                                 </li>
                                 <li>
+                                    <a class="dropdown-item" href="{% url 'restaurants:reservation_list' %}">
+                                        <i class="fas fa-calendar-alt"></i> 予約一覧
+                                    </a>
+                                </li>
+                                <li>
                                     <a class="dropdown-item" href="{% url 'restaurants:favorite_list' %}">
                                         <i class="fas fa-heart"></i> お気に入り一覧
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'restaurants:premium_plan' %}">
+                                        <i class="fas fa-crown"></i> 有料プラン
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>

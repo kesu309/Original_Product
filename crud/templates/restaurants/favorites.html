@@ -1,37 +1,72 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}お気に入り一覧{% endblock %}
 
-{% block content %}
-<div class="container nagoyameshi-container pb-5">
-    <div class="row justify-content-center">
-        <div class="col-xl-5 col-lg-6 col-md-8">
-            <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">お気に入り一覧</li>
-                </ol>
-            </nav>
-            <h1 class="mb-3 text-center">お気に入り一覧</h1>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/favorites.css' %}">
+{% endblock %}
 
-            {% if favorites %}
-                <div class="restaurant-list">
-                    {% for favorite in favorites %}
-                    <div class="restaurant-item">
-                        <h3>{{ favorite.restaurant.name }}</h3>
-                        <p>カテゴリ: {{ favorite.restaurant.get_category_display }}</p>
-                        <p>エリア: {{ favorite.restaurant.get_area_display }}</p>
-                        <p>営業時間: {{ favorite.restaurant.opening_time|time:"H:i" }} - {{ favorite.restaurant.closing_time|time:"H:i" }}</p>
-                        <a href="{% url 'restaurants:restaurant_detail' favorite.restaurant.pk %}" class="detail-link">
-                            詳細を見る
-                        </a>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-center">お気に入りに登録された店舗はありません。</p>
-            {% endif %}
-        </div>
+{% block content %}
+<div class="favorites-container">
+    <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
+            <li class="breadcrumb-item active" aria-current="page">お気に入り一覧</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4 text-center">お気に入り一覧</h1>
+
+    {% csrf_token %}
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if favorites %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>店舗名</th>
+                    <th>郵便番号</th>
+                    <th>住所</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for favorite in favorites %}
+                <tr>
+                    <td>
+                        <a href="{% url 'restaurants:restaurant_detail' favorite.restaurant.pk %}" class="restaurant-link">
+                            {{ favorite.restaurant.name }}
+                        </a>
+                    </td>
+                    <td>〒{{ favorite.restaurant.post_code }}</td>
+                    <td>{{ favorite.restaurant.address }}</td>
+                    <td class="text-end">
+                        <button class="btn btn-outline-danger btn-sm favorite-btn" 
+                                data-restaurant-id="{{ favorite.restaurant.pk }}">
+                            解除
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-message">お気に入りに登録された店舗はありません。</p>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/favorites.js' %}"></script>
 {% endblock %} 

@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from .models import Restaurant, Review, Reservation, Profile
 from django.utils import timezone
 from datetime import datetime, time, timedelta
+from django_flatpickr.widgets import DatePickerInput
+from django_flatpickr.schemas import FlatpickrOptions
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(max_length=254, required=True, help_text='必須。有効なメールアドレスを入力してください。')
@@ -41,11 +43,21 @@ class ReviewForm(forms.ModelForm):
         }
 
 class ReservationForm(forms.ModelForm):
+    date = forms.DateField(
+        widget=DatePickerInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': '予約日を選択してください',
+            }
+        ),
+        label='予約日'
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # 30分刻みの時間選択肢を生成
         time_choices = []
-        start = time(11, 0)  # 11:00から
+        start = time(10, 0)  # 10:00から
         end = time(20, 30)   # 20:30まで
         current = datetime.combine(datetime.today(), start)
         while current.time() <= end:
@@ -59,26 +71,26 @@ class ReservationForm(forms.ModelForm):
         self.fields['time'] = forms.ChoiceField(
             choices=time_choices,
             label='予約時間',
-            widget=forms.Select(attrs={'class': 'form-control'})
+            widget=forms.Select(attrs={
+                'class': 'form-control form-select',
+                'id': 'reservation_time',
+                'placeholder': '予約時間を選択してください'
+            })
+        )
+        
+        self.fields['number_of_people'] = forms.ChoiceField(
+            choices=[(i, f'{i}名') for i in range(1, 11)],
+            label='人数',
+            widget=forms.Select(attrs={
+                'class': 'form-control form-select',
+                'id': 'number_of_people',
+                'placeholder': '予約人数を選択してください'
+            })
         )
 
     class Meta:
         model = Reservation
         fields = ['date', 'time', 'number_of_people']
-        widgets = {
-            'date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control'
-            }),
-            'number_of_people': forms.NumberInput(attrs={
-                'min': 1,
-                'class': 'form-control'
-            })
-        }
-        labels = {
-            'date': '予約日',
-            'number_of_people': '人数',
-        }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -92,7 +104,7 @@ class ReservationForm(forms.ModelForm):
             elif date == timezone.now().date() and time_obj < timezone.now().time():
                 raise forms.ValidationError('過去の時間は選択できません。')
         
-        return cleaned_data 
+        return cleaned_data
 
 class ProfileForm(forms.ModelForm):
     class Meta:

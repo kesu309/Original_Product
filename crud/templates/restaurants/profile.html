@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}会員情報{% endblock %}
 
 {% block content %}
-<div class="container nagoyameshi-container pb-5">
+<div class="container py-5">
     <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
@@ -11,41 +12,76 @@
         </ol>
     </nav>
 
-    <h1 class="mb-4 text-center">会員情報</h1>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
 
     <div class="row justify-content-center">
-        <div class="col-xl-5 col-lg-6 col-md-8">
-            <div class="mb-4">
-                <div class="row mb-2">
-                    <div class="col-3 fw-bold">氏名</div>
-                    <div class="col">{{ user.username }}</div>
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">会員情報</h2>
+                    <a href="{% url 'restaurants:edit_profile' %}" class="btn btn-light btn-sm">編集</a>
                 </div>
-                <div class="row mb-2">
-                    <div class="col-3 fw-bold">フリガナ</div>
-                    <div class="col">{{ profile.username_kana }}</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">氏名</div>
+                        <div class="col-sm-8">{{ profile.user.username }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">フリガナ</div>
+                        <div class="col-sm-8">{{ profile.username_kana|default:"未設定" }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">メールアドレス</div>
+                        <div class="col-sm-8">{{ profile.user.email|default:"未設定" }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">郵便番号</div>
+                        <div class="col-sm-8">{{ profile.post_code|default:"未設定" }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">住所</div>
+                        <div class="col-sm-8">{{ profile.address|default:"未設定" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4 fw-bold">電話番号</div>
+                        <div class="col-sm-8">{{ profile.tel|default:"未設定" }}</div>
+                    </div>
                 </div>
-                <div class="row mb-2">
-                    <div class="col-3 fw-bold">メールアドレス</div>
-                    <div class="col">{{ user.email }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-3 fw-bold">郵便番号</div>
-                    <div class="col">{{ profile.post_code }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-3 fw-bold">住所</div>
-                    <div class="col">{{ profile.address }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-3 fw-bold">電話番号</div>
-                    <div class="col">{{ profile.tel }}</div>
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-center">
-                <a class="btn btn-primary" href="{% url 'restaurants:edit_profile' %}">編集</a>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.card {
+    border-radius: 8px;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0;
+}
+
+.btn-light {
+    background-color: rgba(255,255,255,0.9);
+}
+
+.btn-light:hover {
+    background-color: #fff;
+}
+
+.row > div {
+    padding: 8px;
+}
+
+.fw-bold {
+    color: #666;
+}
+</style>
 {% endblock %} 

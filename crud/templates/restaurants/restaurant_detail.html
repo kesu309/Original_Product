@@ -1,11 +1,169 @@
 {% extends 'base.html' %}
+{% load restaurant_tags %}
 
 {% block content %}
+<style>
+.restaurant-detail {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.restaurant-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.rating-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.rating-stars {
+    color: #ffd700;
+    font-size: 24px;
+}
+
+.rating-number {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.rating-count {
+    color: #666;
+}
+
+.restaurant-nav {
+    margin-bottom: 30px;
+}
+
+.restaurant-nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.info-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.info-label {
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    color: #333;
+    line-height: 1.5;
+}
+
+.action-section {
+    margin: 30px 0;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.favorite-btn, .reservation-btn {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.favorite-btn {
+    background-color: #fff;
+    border: 2px solid #ff6b6b;
+    color: #ff6b6b;
+}
+
+.favorite-btn.active {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+.reservation-btn {
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+}
+
+.reservation-btn:hover {
+    background-color: #45a049;
+}
+
+.reviews-list {
+    margin-top: 40px;
+}
+
+.review-item {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.review-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.review-header .rating {
+    color: #ffd700;
+    font-size: 18px;
+}
+
+.review-header .username {
+    font-weight: bold;
+}
+
+.review-header .date {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.review-item .comment {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.no-reviews {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+</style>
+
 <div class="restaurant-detail">
     <div class="restaurant-header">
         <h1>{{ restaurant.name }}</h1>
         <div class="rating-display">
-            <div class="rating-stars">{{ "★" | multiply:restaurant.average_rating|default:0 }}</div>
+            <div class="rating-stars">
+                {% with stars=restaurant.average_rating|default:0|floatformat:0|add:"0" %}
+                {% for i in "x"|rjust:stars %}★{% endfor %}
+                {% endwith %}
+            </div>
             <div class="rating-number">{{ restaurant.average_rating|default:0|floatformat:1 }}</div>
             <div class="rating-count">({{ reviews.count }}件のレビュー)</div>
         </div>
@@ -29,15 +187,19 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">説明</div>
-                    <div class="info-value">{{ restaurant.description }}</div>
+                    <div class="info-value">{{ restaurant.description|default:"未設定" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">カテゴリ</div>
+                    <div class="info-value">{{ restaurant.get_category_display }}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">価格帯</div>
-                    <div class="info-value">{{ restaurant.price_range }}円</div>
+                    <div class="info-value">{{ restaurant.get_price_range_display }}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">郵便番号</div>
-                    <div class="info-value">{{ restaurant.postal_code }}</div>
+                    <div class="info-value">〒{{ restaurant.post_code }}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">住所</div>
@@ -45,44 +207,36 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">営業時間</div>
-                    <div class="info-value">{{ restaurant.opening_time }} ～ {{ restaurant.closing_time }}</div>
+                    <div class="info-value">{{ restaurant.opening_time|time:"H:i" }} ～ {{ restaurant.closing_time|time:"H:i" }}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">定休日</div>
-                    <div class="info-value">{{ restaurant.closed_days }}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">座席数</div>
-                    <div class="info-value">{{ restaurant.seats }}席</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">カテゴリ</div>
-                    <div class="info-value">{{ restaurant.get_category_display }}</div>
+                    <div class="info-value">{{ restaurant.closed_days|default:"年中無休" }}</div>
                 </div>
             </div>
         </div>
 
         {% if user.is_authenticated %}
-            <div class="action-section">
-                <div class="favorite-section">
-                    <button class="favorite-btn {% if is_favorite %}active{% endif %}" 
-                            data-restaurant-id="{{ restaurant.pk }}">
-                        ♥ お気に入り追加
-                    </button>
-                </div>
-                <div class="reservation-section" id="reservation">
-                    <a href="{% url 'restaurants:make_reservation' restaurant.pk %}" class="btn reservation-btn">予約する</a>
-                </div>
+        <div class="action-section">
+            <div class="favorite-section">
+                <button class="favorite-btn {% if is_favorite %}active{% endif %}" 
+                        data-restaurant-id="{{ restaurant.pk }}">
+                    ♥ お気に入り追加
+                </button>
             </div>
+            <div class="reservation-section" id="reservation">
+                <a href="{% url 'restaurants:make_reservation' restaurant.pk %}" class="btn reservation-btn">予約する</a>
+            </div>
+        </div>
 
-            <div class="review-section" id="reviews">
-                <h2>レビューを書く</h2>
-                <form method="post" action="{% url 'restaurants:add_review' restaurant.pk %}" class="review-form">
-                    {% csrf_token %}
-                    {{ review_form.as_p }}
-                    <button type="submit" class="btn submit-btn">投稿</button>
-                </form>
-            </div>
+        <div class="review-section" id="reviews">
+            <h2>レビューを書く</h2>
+            <form method="post" action="{% url 'restaurants:add_review' restaurant.pk %}" class="review-form">
+                {% csrf_token %}
+                {{ review_form.as_p }}
+                <button type="submit" class="btn submit-btn">投稿</button>
+            </form>
+        </div>
         {% endif %}
 
         <div class="reviews-list">
@@ -91,7 +245,11 @@
                 {% for review in reviews %}
                     <div class="review-item">
                         <div class="review-header">
-                            <span class="rating">{{ "★" | multiply:review.rating }}</span>
+                            <span class="rating">
+                                {% with stars=review.rating %}
+                                {% for i in "x"|rjust:stars %}★{% endfor %}
+                                {% endwith %}
+                            </span>
                             <span class="username">{{ review.user.username }}</span>
                             <span class="date">{{ review.created_at|date:"Y/m/d H:i" }}</span>
                         </div>
@@ -126,4 +284,4 @@ document.querySelector('.favorite-btn').addEventListener('click', function() {
 });
 </script>
 {% endif %}
-{% endblock %} 
+{% endblock %}

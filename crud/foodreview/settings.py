@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-1=!29p$*uc24650ip*-w=jkr(@^66_p*3ah$!yfz*0yg8=z(hp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'restaurants.apps.RestaurantsConfig',
+    'django_flatpickr',
 ]
 
 MIDDLEWARE = [
@@ -130,6 +131,18 @@ LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
 # ログアウト後のリダイレクト先を変更
 LOGOUT_REDIRECT_URL = '/accounts/login/'  # ログアウト後はログイン画面へ
+
+# Flatpickrの設定
+FLATPICKR_SETTINGS = {
+    'locale': 'ja',
+    'altFormat': 'Y年m月d日',
+    'dateFormat': 'Y-m-d',
+    'minDate': 'today',
+    'inline': True,
+    'disableMobile': True,
+    'monthSelectorType': 'static',
+    'static': True,
+}
 
 # Jazzminの設定
 JAZZMIN_SETTINGS = {

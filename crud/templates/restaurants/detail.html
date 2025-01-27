@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const heartIcon = this.querySelector('i');
             
             try {
-                const response = await fetch(`/restaurants/${restaurantId}/toggle_favorite/`, {
+                const response = await fetch(`{% url 'restaurants:toggle_favorite' 0 %}`.replace('0', restaurantId), {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': csrftoken,

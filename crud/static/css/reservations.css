@@ -1,0 +1,71 @@
+.table {
+    margin-top: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    padding: 12px;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 12px;
+}
+
+/* 人数セルのスタイル */
+.table td:nth-child(3) {
+    padding-right: 24px;
+}
+
+/* キャンセルボタンセルのスタイル */
+.table td:last-child {
+    text-align: center;
+    width: 100px;
+}
+
+.btn-outline-primary {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.modal-content {
+    border-radius: 8px;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+.alert {
+    margin-bottom: 20px;
+}
+
+/* 店舗名のリンクスタイル */
+.restaurant-link {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.restaurant-link:hover {
+    color: #45a049;
+    text-decoration: underline;
+}
+
+/* 空の状態のメッセージ */
+.empty-message {
+    text-align: center;
+    color: #666;
+    margin-top: 30px;
+    font-style: italic;
+} 
