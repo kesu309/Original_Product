@@ -3,10 +3,14 @@ from django.contrib.auth.decorators import login_required
 from .models import Restaurant, Review, Reservation, Favorite, Profile  # 必要なモデルのみインポート
 from django.contrib import messages
 from django.contrib.auth import login
-from .forms import SignUpForm, RestaurantSearchForm, ReviewForm, ReservationForm, ProfileForm
+from .forms import SignUpForm, RestaurantSearchForm, ReviewForm, ProfileForm
 from django.db.models import Q
 from django.http import JsonResponse
 from django.utils import timezone
+from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from .serializers import RestaurantSerializer
 
 def restaurant_list(request):
     keyword = request.GET.get('keyword', '')
@@ -87,41 +91,10 @@ def add_review(request, pk):
     return redirect('restaurants:restaurant_detail', pk=pk)
 
 @login_required
-def make_reservation(request, pk):
-    restaurant = get_object_or_404(Restaurant, pk=pk)
-    
-    # 予約可能時間のリストを生成
-    times = []
-    for hour in range(10, 21):  # 10:00から20:30まで
-        for minute in [0, 30]:
-            if hour == 20 and minute == 30:  # 20:30まで
-                break
-            time_str = f"{hour:02d}:{minute:02d}"
-            times.append(time_str)
-    
-    if request.method == 'POST':
-        form = ReservationForm(request.POST)
-        if form.is_valid():
-            reservation = form.save(commit=False)
-            reservation.restaurant = restaurant
-            reservation.user = request.user
-            reservation.save()
-            messages.success(request, '予約が完了しました。')
-            return redirect('restaurants:restaurant_detail', pk=pk)
-    else:
-        form = ReservationForm()
-    
-    return render(request, 'restaurants/reservation_form.html', {
-        'form': form,
-        'restaurant': restaurant,
-        'times': times,
-    })
-
-@login_required
 def reservation_list(request):
     today = timezone.now().date()
     reservations = Reservation.objects.filter(user=request.user).order_by('date', 'time')
-    return render(request, 'restaurants/reservations.html', {
+    return render(request, 'restaurants/reservation_list.html', {
         'reservations': reservations,
         'today': today
     })
@@ -187,3 +160,35 @@ def edit_profile(request):
         form = ProfileForm(instance=profile)
     
     return render(request, 'restaurants/edit_profile.html', {'form': form})
+
+# レストランのCRUD操作用のViewSet
+class RestaurantViewSet(viewsets.ModelViewSet):
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
+
+def restaurant_crud(request):
+    """
+    レストランのCRUD操作用のビュー
+    """
+    return render(request, 'restaurants/restaurant_crud.html')
+
+@login_required
+def reservation_calendar(request, restaurant_id):
+    restaurant = get_object_or_404(Restaurant, pk=restaurant_id)
+    
+    # 予約可能時間のリストを生成
+    hours = []
+    for hour in range(11, 21):  # 11時から20時まで
+        hours.append(f"{hour:02d}:00")
+        hours.append(f"{hour:02d}:30")
+    
+    # 予約可能人数のリスト
+    guest_numbers = range(1, 7)  # 1人から6人まで
+    
+    context = {
+        'restaurant': restaurant,
+        'hours': hours,
+        'guest_numbers': guest_numbers,
+    }
+    
+    return render(request, 'restaurants/reservation_calendar.html', context)

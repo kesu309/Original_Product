@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="bg-light mb-4 py-4">
+<div class="bg-light py-3">
     <div class="container nagoyameshi-container">
         <h2 class="mb-3">キーワードから探す</h2>
         <form method="get" class="user-search-box">
@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<div class="container nagoyameshi-container">
+<div class="container nagoyameshi-container mt-4">
     {% if restaurants %}
         <div class="restaurant-list">
             {% for restaurant in restaurants %}

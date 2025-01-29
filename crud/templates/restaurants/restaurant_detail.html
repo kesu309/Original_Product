@@ -225,7 +225,7 @@
                 </button>
             </div>
             <div class="reservation-section" id="reservation">
-                <a href="{% url 'restaurants:make_reservation' restaurant.pk %}" class="btn reservation-btn">予約する</a>
+                <a href="{% url 'restaurants:reservation_calendar' restaurant.id %}" class="btn reservation-btn">予約する</a>
             </div>
         </div>
 

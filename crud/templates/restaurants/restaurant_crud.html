@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">レストラン管理</h1>
+
+    <!-- 新規作成フォーム -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="h5 mb-0">新規レストラン登録</h2>
+        </div>
+        <div class="card-body">
+            <form id="createForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label">店舗名</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="category" class="form-label">カテゴリ</label>
+                        <select class="form-select" id="category" required>
+                            <option value="japanese">和食</option>
+                            <option value="chinese">中華</option>
+                            <option value="italian">イタリアン</option>
+                            <option value="french">フレンチ</option>
+                            <option value="asian">アジアン</option>
+                            <option value="other">その他</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">登録</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- レストラン一覧 -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="h5 mb-0">レストラン一覧</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table" id="restaurantTable">
+                    <thead>
+                        <tr>
+                            <th>店舗名</th>
+                            <th>カテゴリ</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- JavaScriptで動的に追加 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 編集モーダル -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">レストラン情報編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="mb-3">
+                        <label for="editName" class="form-label">店舗名</label>
+                        <input type="text" class="form-control" id="editName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCategory" class="form-label">カテゴリ</label>
+                        <select class="form-select" id="editCategory" required>
+                            <option value="japanese">和食</option>
+                            <option value="chinese">中華</option>
+                            <option value="italian">イタリアン</option>
+                            <option value="french">フレンチ</option>
+                            <option value="asian">アジアン</option>
+                            <option value="other">その他</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                <button type="button" class="btn btn-primary" id="saveEdit">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // レストラン一覧を取得して表示
+    function loadRestaurants() {
+        fetch('/api/restaurants/')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#restaurantTable tbody');
+                tbody.innerHTML = '';
+                data.forEach(restaurant => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${restaurant.name}</td>
+                        <td>${restaurant.category}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-2" 
+                                    onclick="editRestaurant(${restaurant.id})">編集</button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteRestaurant(${restaurant.id})">削除</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+    }
+
+    // 新規レストラン登録
+    document.getElementById('createForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('name').value,
+            category: document.getElementById('category').value,
+        };
+
+        fetch('/api/restaurants/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(() => {
+            loadRestaurants();
+            this.reset();
+        });
+    });
+
+    // レストラン編集
+    window.editRestaurant = function(id) {
+        fetch(`/api/restaurants/${id}/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('editId').value = data.id;
+                document.getElementById('editName').value = data.name;
+                document.getElementById('editCategory').value = data.category;
+                new bootstrap.Modal(document.getElementById('editModal')).show();
+            });
+    };
+
+    // 編集内容を保存
+    document.getElementById('saveEdit').addEventListener('click', function() {
+        const id = document.getElementById('editId').value;
+        const data = {
+            name: document.getElementById('editName').value,
+            category: document.getElementById('editCategory').value,
+        };
+
+        fetch(`/api/restaurants/${id}/update/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            loadRestaurants();
+        });
+    });
+
+    // レストラン削除
+    window.deleteRestaurant = function(id) {
+        if (confirm('本当に削除しますか？')) {
+            fetch(`/api/restaurants/${id}/update/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(() => loadRestaurants());
+        }
+    };
+
+    // CSRFトークンを取得する関数
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 初期表示時にレストラン一覧を読み込む
+    loadRestaurants();
+});
+</script>
+{% endblock %} 

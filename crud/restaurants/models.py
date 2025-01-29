@@ -3,16 +3,22 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
+class Category(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name='カテゴリー名')
+    slug = models.SlugField(unique=True, verbose_name='スラッグ')
+    description = models.TextField(blank=True, verbose_name='説明')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'カテゴリー'
+        verbose_name_plural = 'カテゴリー一覧'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
 class Restaurant(models.Model):
-    CATEGORY_CHOICES = [
-        ('japanese', '和食'),
-        ('chinese', '中華'),
-        ('italian', 'イタリアン'),
-        ('french', 'フレンチ'),
-        ('asian', 'アジアン'),
-        ('other', 'その他'),
-    ]
-    
     AREA_CHOICES = [
         ('higashi', '福岡市東区'),
         ('chuo', '福岡市中央区'),
@@ -42,10 +48,8 @@ class Restaurant(models.Model):
     post_code = models.CharField(max_length=7, verbose_name='郵便番号')
     address = models.CharField(max_length=200, verbose_name='住所', blank=True, default='')
     category = models.CharField(
-        max_length=20, 
-        choices=CATEGORY_CHOICES, 
-        default='other',
-        verbose_name='カテゴリ'
+        max_length=50,
+        verbose_name='カテゴリー'
     )
     area = models.CharField(
         max_length=20, 
@@ -56,6 +60,11 @@ class Restaurant(models.Model):
     opening_time = models.TimeField(default='11:00', verbose_name='開店時間')
     closing_time = models.TimeField(default='22:00', verbose_name='閉店時間')
     closed_days = models.CharField(max_length=100, verbose_name='定休日', blank=True)
+
+    class Meta:
+        verbose_name = 'レストラン'
+        verbose_name_plural = 'レストラン一覧'
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -169,10 +178,13 @@ class Favorite(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    username_kana = models.CharField(max_length=100, default='')
-    post_code = models.CharField(max_length=7, default='')
-    address = models.CharField(max_length=200, default='')
-    tel = models.CharField(max_length=11, default='')
+    username_kana = models.CharField(max_length=100, default='', verbose_name='フリガナ')
+    post_code = models.CharField(max_length=7, default='', verbose_name='郵便番号')
+    address = models.CharField(max_length=200, default='', verbose_name='住所')
+    tel = models.CharField(max_length=11, default='', verbose_name='電話番号')
+    nickname = models.CharField(max_length=50, blank=True, verbose_name='ニックネーム')
+    bio = models.TextField(blank=True, verbose_name='自己紹介')
+    favorite_cuisine = models.CharField(max_length=100, blank=True, verbose_name='好きな料理')
 
     def __str__(self):
         return self.user.username
