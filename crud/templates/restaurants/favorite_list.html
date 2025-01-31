@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}お気に入り一覧{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav class="my-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">ホーム</a></li>
+            <li class="breadcrumb-item active" aria-current="page">お気に入り一覧</li>
+        </ol>
+    </nav>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">お気に入り一覧</h2>
+        </div>
+        <div class="card-body">
+            {% if favorites %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>店舗名</th>
+                                <th>カテゴリー</th>
+                                <th>住所</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for favorite in favorites %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'restaurants:restaurant_detail' favorite.restaurant.pk %}" class="text-decoration-none">
+                                            {{ favorite.restaurant.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ favorite.restaurant.category }}</td>
+                                    <td>{{ favorite.restaurant.address }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'restaurants:toggle_favorite' favorite.restaurant.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-heart"></i> 解除
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center my-5">お気に入りに登録された店舗はありません。</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.btn-danger {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.alert {
+    margin-bottom: 1rem;
+}
+
+.fa-heart {
+    margin-right: 5px;
+}
+</style>
+{% endblock %} 

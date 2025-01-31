@@ -6,11 +6,11 @@ INSERT INTO users (username, email, password_hash, created_at, updated_at) VALUE
 
 -- レストランのサンプルデータ
 INSERT INTO restaurants (name, category, address, phone_number, description, average_rating, created_at, updated_at) VALUES
-('博多もつ鍋 よかろう', '和食', '福岡県福岡市博多区中洲3-1-1', '000-000-0000', '博多名物のもつ鍋と地酒が楽しめる本格店です', 4.5, DATETIME('now'), DATETIME('now')),
-('トラットリア フクオカ', 'イタリアン', '福岡県福岡市中央区天神2-2-2', '092-234-5678', '地元の新鮮な魚介類を使用した本格イタリアンレストラン', 4.2, DATETIME('now'), DATETIME('now')),
-('長浜屋台ラーメン 福龍', 'ラーメン', '福岡県福岡市博多区長浜1-1-1', '092-345-6789', '創業50年の老舗豚骨ラーメン店', 4.3, DATETIME('now'), DATETIME('now')),
-('炉端焼き 海鮮太郎', '居酒屋', '福岡県福岡市中央区大名1-3-3', '092-456-7890', '玄界灘の新鮮な魚介類を炉端焼きで提供', 4.4, DATETIME('now'), DATETIME('now')),
-('うどん 博多っ子', 'うどん', '福岡県福岡市東区箱崎1-4-4', '092-567-8901', '手打ちうどんと明太子が自慢の店', 4.1, DATETIME('now'), DATETIME('now'));
+('ABC屋', '和食', '福岡県福岡市博多区中洲3-1-1', '000-000-0000', '博多名物のもつ鍋と地酒が楽しめる本格店です', 4.5, DATETIME('now'), DATETIME('now')),
+('ABD屋', 'イタリアン', '福岡県福岡市中央区天神2-2-2', '010-0000-0000', '地元の新鮮な魚介類を使用した本格イタリアンレストラン', 4.2, DATETIME('now'), DATETIME('now')),
+('ABE屋', 'ラーメン', '福岡県福岡市博多区長浜1-1-1', '020-0000-0000', '創業50年の老舗豚骨ラーメン店', 4.3, DATETIME('now'), DATETIME('now')),
+('ABF屋', '居酒屋', '福岡県福岡市中央区大名1-3-3', '030-0000-0000', '玄界灘の新鮮な魚介類を炉端焼きで提供', 4.4, DATETIME('now'), DATETIME('now')),
+('ABG屋', 'うどん', '福岡県福岡市東区箱崎1-4-4', '040-0000-0000', '手打ちうどんと明太子が自慢の店', 4.1, DATETIME('now'), DATETIME('now'));
 
 -- レビューのサンプルデータ
 INSERT INTO reviews (user_id, restaurant_id, rating, comment, created_at, updated_at) VALUES

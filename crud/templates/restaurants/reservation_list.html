@@ -60,94 +60,74 @@
         </ol>
     </nav>
 
-    <h1 class="mb-4 text-center">予約一覧</h1>
-
     {% if messages %}
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endfor %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
     {% endif %}
 
-    {% if reservations %}
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>店舗名</th>
-                    <th>予約日時</th>
-                    <th>人数</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reservation in reservations %}
-                <tr>
-                    <td>
-                        <a href="{% url 'restaurants:restaurant_detail' pk=reservation.restaurant.pk %}" class="restaurant-link">
-                            {{ reservation.restaurant.name }}
-                        </a>
-                    </td>
-                    <td>{{reservation.date|date:"Y/m/d"}}（{{reservation.get_japanese_weekday}}） {{reservation.time|time:"H:i"}}</td>
-                    <td>{{reservation.number_of_people}}名</td>
-                    <td class="text-end">
-                        {% if today < reservation.date %}
-                        <button type="button" class="btn btn-outline-danger btn-sm" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#deleteModal{{reservation.pk}}">
-                            削除
-                        </button>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <p class="empty-message">予約はありません。</p>
-    {% endif %}
-</div>
-
-<!-- 削除確認モーダル -->
-{% for reservation in reservations %}
-<div class="modal fade" id="deleteModal{{reservation.pk}}" tabindex="-1" aria-labelledby="deleteModalLabel{{reservation.pk}}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel{{reservation.pk}}">予約削除の確認</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
-            </div>
-            <div class="modal-body">
-                <p>以下の予約を削除しますか？</p>
-                <p>店舗名: {{ reservation.restaurant.name }}</p>
-                <p>予約日時: {{ reservation.date|date:"Y/m/d" }}（{{ reservation.get_japanese_weekday }}） {{ reservation.time|time:"H:i" }}</p>
-                <p>人数: {{ reservation.number_of_people }}名</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-                <form method="post" action="{% url 'restaurants:cancel_reservation' pk=reservation.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">削除する</button>
-                </form>
-            </div>
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">予約一覧</h2>
+        </div>
+        <div class="card-body">
+            {% if reservations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>店舗名</th>
+                                <th>予約日</th>
+                                <th>予約時間</th>
+                                <th>人数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in reservations %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'restaurants:restaurant_detail' reservation.restaurant.pk %}" class="text-decoration-none">
+                                            {{ reservation.restaurant.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ reservation.date }}</td>
+                                    <td>{{ reservation.time }}</td>
+                                    <td>{{ reservation.number_of_people }}名</td>
+                                    <td>
+                                        <form method="post" action="{% url 'restaurants:cancel_reservation' reservation.pk %}" class="d-inline" onsubmit="return confirm('予約をキャンセルしてもよろしいですか？');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm">キャンセル</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center my-5">予約はありません。</p>
+            {% endif %}
         </div>
     </div>
 </div>
-{% endfor %}
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // メッセージの自動非表示
-    var alerts = document.querySelectorAll('.alert');
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
-            var bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 3000);
-    });
-});
-</script>
+<style>
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.btn-danger {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.alert {
+    margin-bottom: 1rem;
+}
+</style>
 {% endblock %} 

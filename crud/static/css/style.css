@@ -1070,3 +1070,53 @@ footer {
 .menu-toggle:checked ~ .menu-content {
     display: block;
 }
+
+.card {
+    transition: transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.badge {
+    font-size: 0.8rem;
+    padding: 0.4em 0.8em;
+}
+
+.search-section {
+    background-color: #f8f9fa;
+    padding: 2rem;
+    border-radius: 8px;
+}
+
+.search-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ブランドテキストのスタイル */
+.brand-text {
+    font-family: 'Impact', sans-serif;
+    font-size: 24px;
+    letter-spacing: 1px;
+    text-transform: lowercase;
+}
+
+/* レビュー投稿ボタンのスタイル */
+.submit-btn {
+    background-color: #4CAF50 !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border: none !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    transition: all 0.3s ease !important;
+}
+
+.submit-btn:hover {
+    background-color: #45a049 !important;
+    color: white !important;
+}

@@ -17,29 +17,31 @@
         </div>
         <form method="post" class="reservation-form">
             {% csrf_token %}
-            <div class="form-field">
-                <label for="date">予約日</label>
-                <input type="date" id="date" name="date" required>
+            <div class="form-fields-container">
+                <div class="form-field">
+                    <label for="date">予約日</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <div class="form-field">
+                    <label for="time">予約時間</label>
+                    <select id="time" name="time" required>
+                        <option value="" disabled selected>時間を選択してください</option>
+                        {% for hour in hours %}
+                            <option value="{{ hour }}">{{ hour }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="number_of_people">人数</label>
+                    <select id="number_of_people" name="number_of_people" required>
+                        <option value="" disabled selected>人数を選択してください</option>
+                        {% for i in guest_numbers %}
+                            <option value="{{ i }}">{{ i }}名</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="form-field">
-                <label for="time">予約時間</label>
-                <select id="time" name="time" required>
-                    <option value="" disabled selected>時間を選択してください</option>
-                    {% for hour in hours %}
-                        <option value="{{ hour }}">{{ hour }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-field">
-                <label for="number_of_people">人数</label>
-                <select id="number_of_people" name="number_of_people" required>
-                    <option value="" disabled selected>人数を選択してください</option>
-                    {% for i in guest_numbers %}
-                        <option value="{{ i }}">{{ i }}名</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-field">
+            <div class="form-button">
                 <button type="submit">予約する</button>
             </div>
         </form>

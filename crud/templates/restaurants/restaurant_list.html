@@ -2,12 +2,20 @@
 {% load static %}
 
 {% block content %}
+<!-- デバッグ情報 -->
+<div class="container mt-3">
+    <div class="alert alert-info">
+        <p>現在の検索キーワード: {{ keyword|default:"なし" }}</p>
+        <p>検索結果件数: {{ restaurants|length }}件</p>
+    </div>
+</div>
+
 <div class="bg-light py-3">
     <div class="container nagoyameshi-container">
         <h2 class="mb-3">キーワードから探す</h2>
         <form method="get" class="user-search-box">
             <div class="input-group">
-                <input type="text" class="form-control" placeholder="店舗名・エリア・カテゴリ" name="keyword" value="{{ form.keyword.value|default:'' }}">
+                <input type="text" class="form-control" placeholder="店舗名・住所・カテゴリ" name="keyword" value="{{ keyword|default:'' }}">
                 <button type="submit" class="btn btn-primary text-white shadow-sm">検索</button>
             </div>
         </form>
@@ -20,9 +28,9 @@
             {% for restaurant in restaurants %}
                 <div class="restaurant-item">
                     <h3>{{ restaurant.name }}</h3>
-                    <p>カテゴリ: {{ restaurant.get_category_display }}</p>
-                    <p>エリア: {{ restaurant.get_area_display }}</p>
-                    <p>営業時間: {{ restaurant.opening_time|time:"H:i" }} - {{ restaurant.closing_time|time:"H:i" }}</p>
+                    <p>カテゴリ: {{ restaurant.category }}</p>
+                    <p>住所: {{ restaurant.address }}</p>
+                    <p>説明: {{ restaurant.description }}</p>
                     <a href="{% url 'restaurants:restaurant_detail' restaurant.id %}" class="detail-link">詳細を見る</a>
                 </div>
             {% endfor %}

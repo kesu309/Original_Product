@@ -1,60 +1,76 @@
 form {
     width: 80%;
     margin: 0 auto;
-  }
-  
-  input[type='text'], input[type='date'], input[type='time'], select {
+}
+
+.form-fields-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-field {
+    flex: 1;
+}
+
+input[type='text'], input[type='date'], input[type='time'], select {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
     box-sizing: border-box;
-  }
-  
-  .form-field {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  label {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+label {
     font-weight: 600;
-  }
-  
-  button[type='submit'] {
+    color: #333;
+}
+
+button[type='submit'] {
     background-color: #4CAF50;
     color: white;
     padding: 14px 20px;
     margin: 8px 0;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
     width: 100%;
-  }
-  
-  button[type='submit']:hover {
+}
+
+button[type='submit']:hover {
     opacity: 0.8;
-  }
-  
-  @media screen and (max-width: 600px) {
-    form {
-      width: 100%;
-    }
-  }
-  
-  .restaurant-info {
+}
+
+.restaurant-info {
     text-align: center;
     margin-bottom: 40px;
     padding: 20px;
     background-color: #f8f9fa;
     border-radius: 8px;
-  }
-  
-  .restaurant-address {
+}
+
+.restaurant-address {
     color: #555;
     margin-bottom: 10px;
     font-size: 14px;
-  }
-  
-  .restaurant-hours {
+}
+
+.restaurant-hours {
     color: #666;
     font-size: 14px;
-  }
+}
+
+@media screen and (max-width: 768px) {
+    .form-fields-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    form {
+        width: 100%;
+        padding: 0 20px;
+    }
+}
   

@@ -2,10 +2,15 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from datetime import time
+from multiselectfield import MultiSelectField
 
 class Category(models.Model):
-    name = models.CharField(max_length=50, unique=True, verbose_name='カテゴリー名')
-    slug = models.SlugField(unique=True, verbose_name='スラッグ')
+    name = models.CharField(max_length=200, verbose_name='カテゴリー名')
+    img = models.ImageField(blank=True, default='noImage.png', verbose_name='画像')
     description = models.TextField(blank=True, verbose_name='説明')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -46,11 +51,9 @@ class Restaurant(models.Model):
         verbose_name='価格帯'
     )
     post_code = models.CharField(max_length=7, verbose_name='郵便番号')
-    address = models.CharField(max_length=200, verbose_name='住所', blank=True, default='')
-    category = models.CharField(
-        max_length=50,
-        verbose_name='カテゴリー'
-    )
+    address = models.CharField(max_length=200, verbose_name='住所')
+    tel = models.CharField(max_length=20, verbose_name='電話番号')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='カテゴリー')
     area = models.CharField(
         max_length=20, 
         choices=AREA_CHOICES, 
@@ -59,7 +62,23 @@ class Restaurant(models.Model):
     )
     opening_time = models.TimeField(default='11:00', verbose_name='開店時間')
     closing_time = models.TimeField(default='22:00', verbose_name='閉店時間')
-    closed_days = models.CharField(max_length=100, verbose_name='定休日', blank=True)
+    closed_days = MultiSelectField(
+        choices=[
+            ('mon', '月'),
+            ('tue', '火'),
+            ('wed', '水'),
+            ('thu', '木'),
+            ('fri', '金'),
+            ('sat', '土'),
+            ('sun', '日'),
+        ],
+        max_length=30,
+        verbose_name='定休日',
+        blank=True
+    )
+    img = models.ImageField(blank=True, default='noImage.png', verbose_name='画像')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'レストラン'
@@ -110,27 +129,11 @@ class Reservation(models.Model):
         on_delete=models.CASCADE,
         verbose_name='ユーザー'
     )
-    date = models.DateField(
-        verbose_name='予約日',
-        error_messages={
-            'invalid': '正しい日付の形式で入力してください。',
-            'required': '予約日を入力してください。'
-        }
-    )
-    time = models.TimeField(
-        verbose_name='予約時間',
-        error_messages={
-            'invalid': '正しい時間の形式で入力してください。',
-            'required': '予約時間を入力してください。'
-        }
-    )
+    date = models.DateField(verbose_name='予約日')
+    time = models.TimeField(verbose_name='予約時間')
     number_of_people = models.IntegerField(
-        validators=[MinValueValidator(1, message='1名以上を入力してください。')],
-        verbose_name='人数',
-        error_messages={
-            'invalid': '正しい人数を入力してください。',
-            'required': '人数を入力してください。'
-        }
+        validators=[MinValueValidator(1)],
+        verbose_name='人数'
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -171,7 +174,7 @@ class Favorite(models.Model):
     class Meta:
         verbose_name = 'お気に入り'
         verbose_name_plural = 'お気に入り一覧'
-        unique_together = ['restaurant', 'user']  # 重複を防ぐ
+        unique_together = ['restaurant', 'user']
 
     def __str__(self):
         return f"{self.user.username}が{self.restaurant.name}をお気に入り登録"
@@ -182,9 +185,46 @@ class Profile(models.Model):
     post_code = models.CharField(max_length=7, default='', verbose_name='郵便番号')
     address = models.CharField(max_length=200, default='', verbose_name='住所')
     tel = models.CharField(max_length=11, default='', verbose_name='電話番号')
-    nickname = models.CharField(max_length=50, blank=True, verbose_name='ニックネーム')
-    bio = models.TextField(blank=True, verbose_name='自己紹介')
-    favorite_cuisine = models.CharField(max_length=100, blank=True, verbose_name='好きな料理')
+    birth_date = models.DateField(null=True, blank=True, verbose_name='誕生日')
+    business = models.CharField(max_length=20, blank=True, verbose_name='職業')
 
     def __str__(self):
         return self.user.username
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Create user profile when user is created"""
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Update user profile when user is saved"""
+    instance.profile.save()
+
+class Company(models.Model):
+    name = models.CharField(max_length=50, verbose_name='会社名')
+    address = models.CharField(max_length=50, verbose_name='所在地')
+    president = models.CharField(max_length=20, verbose_name='代表者')
+    since = models.CharField(max_length=20, verbose_name='設立')
+    budget = models.CharField(max_length=20, verbose_name='資本金')
+    business = models.CharField(max_length=50, verbose_name='事業内容')
+    people = models.CharField(max_length=20, verbose_name='従業員数')
+
+    class Meta:
+        verbose_name = '会社情報'
+        verbose_name_plural = '会社情報'
+
+    def __str__(self):
+        return self.name
+
+class Terms(models.Model):
+    contents = models.TextField(verbose_name='利用規約')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = '利用規約'
+        verbose_name_plural = '利用規約'
+
+    def __str__(self):
+        return '利用規約'

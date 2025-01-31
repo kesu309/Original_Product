@@ -4,24 +4,32 @@ from .models import Restaurant, Review, Reservation, Favorite, Profile  # 必要
 from django.contrib import messages
 from django.contrib.auth import login
 from .forms import SignUpForm, RestaurantSearchForm, ReviewForm, ProfileForm
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .serializers import RestaurantSerializer
+from datetime import datetime, timedelta
 
 def restaurant_list(request):
     keyword = request.GET.get('keyword', '')
-    restaurants = Restaurant.objects.all()
+    print(f"検索キーワード: {keyword}")  # デバッグ用
+
+    # 全レストランの取得（評価の高い順）
+    restaurants = Restaurant.objects.annotate(
+        average_rating_annotated=Avg('reviews__rating')
+    ).order_by('-average_rating_annotated')
+    print(f"全レストラン数: {restaurants.count()}")  # デバッグ用
 
     if keyword:
         restaurants = restaurants.filter(
             Q(name__icontains=keyword) |  # 店舗名で検索
-            Q(category__in=[choice[0] for choice in Restaurant.CATEGORY_CHOICES if keyword.lower() in choice[1].lower()]) |  # カテゴリで検索
-            Q(area__in=[choice[0] for choice in Restaurant.AREA_CHOICES if keyword.lower() in choice[1].lower()])  # エリアで検索
+            Q(category__name__icontains=keyword) |  # カテゴリ名で検索
+            Q(address__icontains=keyword)  # 住所で検索
         ).distinct()
+        print(f"検索結果数: {restaurants.count()}")  # デバッグ用
 
     context = {
         'restaurants': restaurants,
@@ -58,23 +66,20 @@ def signup(request):
 
 @login_required
 def toggle_favorite(request, pk):
-    """お気に入りの切り替えを処理する"""
-    if request.method == 'POST':
-        restaurant = get_object_or_404(Restaurant, pk=pk)
-        favorite = Favorite.objects.filter(user=request.user, restaurant=restaurant).first()
-        
-        if favorite:
-            # お気に入りが存在する場合は削除
-            favorite.delete()
-            is_favorite = False
-        else:
-            # お気に入りが存在しない場合は作成
-            Favorite.objects.create(user=request.user, restaurant=restaurant)
-            is_favorite = True
-        
-        return JsonResponse({'is_favorite': is_favorite})
+    restaurant = get_object_or_404(Restaurant, pk=pk)
+    # お気に入りの検索
+    favorite = Favorite.objects.filter(user=request.user, restaurant=restaurant).first()
     
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    if favorite:
+        # お気に入りが存在する場合は削除
+        favorite.delete()
+        messages.success(request, 'お気に入りから削除しました。')
+    else:
+        # お気に入りが存在しない場合は作成
+        Favorite.objects.create(user=request.user, restaurant=restaurant)
+        messages.success(request, 'お気に入りに追加しました。')
+    
+    return redirect('restaurants:restaurant_detail', pk=pk)
 
 @login_required
 def add_review(request, pk):
@@ -82,12 +87,14 @@ def add_review(request, pk):
     if request.method == 'POST':
         form = ReviewForm(request.POST)
         if form.is_valid():
-            review = form.save(commit=False)
-            review.restaurant = restaurant
-            review.user = request.user
-            review.save()
+            # レビューの作成
+            review = Review.objects.create(
+                restaurant=restaurant,
+                user=request.user,
+                rating=form.cleaned_data['rating'],
+                comment=form.cleaned_data['comment']
+            )
             messages.success(request, 'レビューを投稿しました。')
-            return redirect('restaurants:restaurant_detail', pk=pk)
     return redirect('restaurants:restaurant_detail', pk=pk)
 
 @login_required
@@ -101,45 +108,20 @@ def reservation_list(request):
 
 @login_required
 def cancel_reservation(request, pk):
+    # 予約の取得と削除
+    reservation = get_object_or_404(Reservation, pk=pk, user=request.user)
     try:
-        reservation = get_object_or_404(Reservation, pk=pk, user=request.user)
-        if request.method == 'POST':
-            if reservation.date > timezone.now().date():
-                restaurant_name = reservation.restaurant.name
-                reservation.delete()
-                messages.success(request, f'{restaurant_name}の予約を削除しました。')
-            else:
-                messages.error(request, '過去の予約は削除できません。')
-    except Reservation.DoesNotExist:
-        messages.error(request, '予約が見つかりません。')
+        reservation.delete()
+        messages.success(request, '予約をキャンセルしました。')
+    except Exception as e:
+        messages.error(request, '予約のキャンセルに失敗しました。')
+    
     return redirect('restaurants:reservation_list')
 
 @login_required
 def favorite_list(request):
     favorites = Favorite.objects.filter(user=request.user).select_related('restaurant')
-    return render(request, 'restaurants/favorites.html', {
-        'favorites': favorites
-    })
-
-@login_required
-def premium_plan(request):
-    """プレミアムプランの情報を表示する"""
-    monthly_plan = {
-        'price': '500',
-        'features': [
-            '予約回数が無制限',
-            'お気に入り店舗の登録数無制限',
-            '会員限定情報の閲覧',
-            'レビュー投稿無制限',
-            'レビュー全件閲覧可能',
-        ]
-    }
-    
-    context = {
-        'monthly_plan': monthly_plan,
-    }
-    
-    return render(request, 'restaurants/premium_plan.html', context)
+    return render(request, 'restaurants/favorite_list.html', {'favorites': favorites})
 
 @login_required
 def profile_view(request):
@@ -148,18 +130,27 @@ def profile_view(request):
 
 @login_required
 def edit_profile(request):
-    profile, created = Profile.objects.get_or_create(user=request.user)
-    
     if request.method == 'POST':
-        form = ProfileForm(request.POST, instance=profile)
-        if form.is_valid():
-            form.save()
-            messages.success(request, '会員情報を更新しました。')
-            return redirect('restaurants:profile')
-    else:
-        form = ProfileForm(instance=profile)
-    
-    return render(request, 'restaurants/edit_profile.html', {'form': form})
+        # ユーザー情報の更新
+        request.user.username = request.POST.get('username')
+        request.user.email = request.POST.get('email')
+        request.user.save()
+
+        # プロフィール情報の更新
+        profile = request.user.profile
+        profile.username_kana = request.POST.get('username_kana')
+        profile.post_code = request.POST.get('post_code')
+        profile.address = request.POST.get('address')
+        profile.tel = request.POST.get('tel')
+        profile.save()
+
+        messages.success(request, '会員情報を更新しました。')
+        return redirect('restaurants:profile')
+
+    return render(request, 'restaurants/edit_profile.html', {
+        'user': request.user,
+        'profile': request.user.profile
+    })
 
 # レストランのCRUD操作用のViewSet
 class RestaurantViewSet(viewsets.ModelViewSet):
@@ -176,14 +167,38 @@ def restaurant_crud(request):
 def reservation_calendar(request, restaurant_id):
     restaurant = get_object_or_404(Restaurant, pk=restaurant_id)
     
-    # 予約可能時間のリストを生成
-    hours = []
-    for hour in range(11, 21):  # 11時から20時まで
-        hours.append(f"{hour:02d}:00")
-        hours.append(f"{hour:02d}:30")
+    if request.method == 'POST':
+        date = request.POST.get('date')
+        time = request.POST.get('time')
+        number_of_people = request.POST.get('number_of_people')
+        
+        try:
+            # 予約の作成
+            reservation = Reservation.objects.create(
+                restaurant=restaurant,
+                user=request.user,
+                date=date,
+                time=time,
+                number_of_people=number_of_people
+            )
+            messages.success(request, '予約が完了しました。')
+            return redirect('restaurants:reservation_list')
+        except Exception as e:
+            messages.error(request, '予約に失敗しました。もう一度お試しください。')
+            return redirect('restaurants:reservation_calendar', restaurant_id=restaurant_id)
     
-    # 予約可能人数のリスト
-    guest_numbers = range(1, 7)  # 1人から6人まで
+    # 予約可能時間の生成（10:00から21:00まで1時間おき）
+    hours = []
+    start = datetime.strptime('10:00', '%H:%M').time()
+    end = datetime.strptime('21:00', '%H:%M').time()
+    current = datetime.combine(datetime.today(), start)
+    
+    while current.time() <= end:
+        hours.append(current.strftime('%H:%M'))
+        current += timedelta(hours=1)
+    
+    # 予約可能人数（1人から10人まで）
+    guest_numbers = range(1, 11)
     
     context = {
         'restaurant': restaurant,

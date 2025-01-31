@@ -44,7 +44,7 @@ class ReviewForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['nickname', 'bio', 'favorite_cuisine']
+        fields = ['username_kana', 'post_code', 'address', 'tel', 'birth_date', 'business']
         widgets = {
-            'bio': forms.Textarea(attrs={'rows': 3}),
+            'birth_date': forms.DateInput(attrs={'type': 'date'}),
         } 
